@@ -1,0 +1,17 @@
+{"producer":{"name":"Blender","version":"2.74 (sub 0)","exporter_version":"4.6.1","file":"untitled_scene.babylon"},
+"autoClear":true,"clearColor":[0.2,0.2,0.2],"ambientColor":[0,0,0],"gravity":[0,-9.81,0],
+"materials":[{"name":"untitled_scene.Plane001Default","id":"untitled_scene.Plane001Default","ambient":[0.6902,0.6902,0.6902],"diffuse":[0.6902,0.6902,0.6902],"specular":[0.5,0.5,0.5],"emissive":[0,0,0],"specularPower":50,"alpha":1,"backFaceCulling":true,"checkReadyOnlyOnce":false}],
+"multiMaterials":[],
+"skeletons":[],
+"meshes":[{"name":"tri","id":"tri","position":[0,0,0],"rotationQuaternion":[0,0,0,-1],"scaling":[1,1,1],"isVisible":false,"isEnabled":true,"checkCollisions":false,"billboardMode":0,"receiveShadows":false},{"name":"Plane001","id":"Plane001","parentId":"tri","materialId":"untitled_scene.Plane001Default","billboardMode":0,"position":[0,0,0],"rotationQuaternion":[-0.7071,0,0,-0.7071],"scaling":[0.01,0.01,0.01],"isVisible":true,"freezeWorldMatrix":false,"isEnabled":true,"checkCollisions":false,"receiveShadows":true
+,"positions":[-100,-50,0,-100,-100,0,-50,-50,0,-50,-100,0,0,-50,0,0,-100,0,50,-50,0,50,-100,0,100,-50,0,100,-100,0,-100,0,0,-50,0,0,0,0,0,50,0,0,100,0,0,-100,50,0,-50,50,0,0,50,0,50,50,0,100,50,0,-100,100,0,-50,100,0,0,100,0,50,100,0,100,100,0]
+,"normals":[0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1]
+,"uvs":[0,0.25,0,0,0.25,0.25,0.25,0,0.5,0.25,0.5,0,0.75,0.25,0.75,0,1,0.25,1,0,0,0.5,0.25,0.5,0.5,0.5,0.75,0.5,1,0.5,0,0.75,0.25,0.75,0.5,0.75,0.75,0.75,1,0.75,0,1,0.25,1,0.5,1,0.75,1,1,1]
+,"indices":[0,1,2,3,2,1,2,3,4,5,4,3,4,5,6,7,6,5,6,7,8,9,8,7,10,0,11,2,11,0,11,2,12,4,12,2,12,4,13,6,13,4,13,6,14,8,14,6,15,10,16,11,16,10,16,11,17,12,17,11,17,12,18,13,18,12,18,13,19,14,19,13,20,15,21,16,21,15,21,16,22,17,22,16,22,17,23,18,23,17,23,18,24,19,24,18]
+,"subMeshes":[{"materialIndex":0,"verticesStart":0,"verticesCount":25,"indexStart":0,"indexCount":96}]
+,"instances":[]}
+],
+"cameras":[],
+"lights":[],
+"shadowGenerators":[]
+}
