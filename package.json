@@ -1,0 +1,17 @@
+{
+  "name": "MultiP",
+  "version": "1.0.0",
+  "description": "mmo",
+  "author": "me",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "github:dd"
+  },
+  "dependencies": {
+   "webhamsters": "^3.7.0"
+  },
+  "engines": {
+    "node": "*"
+  }
+}
