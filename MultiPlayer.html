@@ -1,0 +1,584 @@
+<!doctype html>
+<html>
+<head>
+   <meta charset="utf-8">
+   <title>Babylon - Basic scene</title>
+   <style>
+      html, body {
+         overflow: hidden;
+         width: 100%;
+         height: 100%;
+         margin: 0;
+         padding: 0;
+      }
+      #renderCanvas {
+         width: 100%;
+         height: 100%;
+         touch-action: none;
+      }
+   </style>
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/babylonjs/2.4.0/babylon.js"></script>
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.8/socket.io.js"></script>
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.js"></script> <!-- optional physics engine -->
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+</head>
+<body>
+   <canvas id="renderCanvas"></canvas>
+   <script type="text/javascript">
+       
+       
+       
+       var sphere, inputs = [];
+       var globalGravity = new CANNON.Vec3(0,-30,0);
+       var camera;
+       var lastSequence = 0;
+       var client = {};
+       client.left = false;
+       client.right = false;
+       client.forward = false;
+       client.back = false;
+       pending_inputs = [];
+       inputsToSend = [];
+       input_sequence_number = -1;
+       var networkLatency = 200;
+     //  var keys;
+     //  keys.left=1;
+       this.playerDirection = [0,0,0,0];
+       quat = new CANNON.Quaternion();
+
+    
+            var iosocket = io.connect("http://localhost:8080");
+            iosocket.on('connect', function () {
+               console.log("connect");
+                iosocket.on('message', function(message) {
+                 // console.log(message);
+                });
+                
+                 iosocket.on('updatePOS', function(message) {
+                     
+                     
+                   
+			
+                     setTimeout(function () {
+	
+	
+		
+                     sphereBody.position.x = message.x;
+                     sphereBody.position.y = message.y;
+                     sphereBody.position.z = message.z;
+                     ghostSphere.position.x = message.x;
+                      ghostSphere.position.y = message.y;
+                      ghostSphere.position.z = message.z;
+                          
+              lastSequence = message.last;
+                     console.log(lastSequence);
+                     for (var x in pending_inputs){
+                        if (x <= lastSequence){
+                            console.log(x);
+                           delete pending_inputs[x];
+                            pending_inputs.splice(x, 1);
+                            delete inputsToSend[x];
+                            inputsToSend.splice(x, 1);
+                            
+                        } else {
+                             //console.log(x);
+                            //  console.log(pending_inputs[x]);
+                         applyInputs(pending_inputs[x]); 
+                        }
+                         
+                      
+                         
+                         
+                     }
+                  
+               }, networkLatency);
+                     
+                });
+                
+                
+                iosocket.on('spawnPlayer', function(player) {
+          
+                    console.log("Spawning Player");
+              
+                });
+                
+                
+                iosocket.on('disconnect', function() {
+                  
+                });
+            });
+        
+     
+      
+      var canvas = document.querySelector("#renderCanvas");
+ 
+      var engine = new BABYLON.Engine(canvas, true);
+
+// setTimeout(sendInput, 2000);
+       
+       function sendInput(){
+           console.log("2 sek");
+           for (var x in inputsToSend){
+             iosocket.emit('input', inputsToSend[x]);  
+               
+           }
+        setTimeout(sendInput, 2000);   
+       }
+ 
+ var createScene = function () {
+	  	this.playerDirection = [0,0,0,0];
+         // Now create a basic Babylon Scene object
+         var scene = new BABYLON.Scene(engine);
+        scene.debugLayer.show();
+         // Change the scene background color to green.
+         scene.clearColor = new BABYLON.Color3(0, 1, 0);
+         // This creates and positions a free camera
+         camera = new BABYLON.FreeCamera("camera1", new BABYLON.Vector3(0, 5, -10), scene);
+         // This targets the camera to scene origin
+         camera.setTarget(BABYLON.Vector3.Zero());
+         // This attaches the camera to the canvas
+         camera.attachControl(canvas, false);
+         // This creates a light, aiming 0,1,0 - to the sky.
+         var light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene);
+         // Dim the light a small amount
+         light.intensity = .5;
+         // Let's try our built-in 'sphere' shape. Params: name, subdivisions, size, scene
+         this.sphere = BABYLON.Mesh.CreateSphere("sphere1", 16, 2, scene);
+		 this.sphere.quaternion = new CANNON.Quaternion(0,0,0,0);
+         this.box = BABYLON.MeshBuilder.CreateBox("box", {height: 5}, scene);
+         // Move the sphere upward 1/2 its height
+         this.sphere.position.y = 2;
+         this.box.position.y = 2.5;
+         this.box.position.z = 2;
+         this.box.parent = this.sphere;
+        ghostSphere = BABYLON.Mesh.CreateSphere("ghost", 16, 2, scene);
+         var ghostMat = new BABYLON.StandardMaterial("texture1", scene);
+         ghostMat.diffuseColor = new BABYLON.Color3(0.5, 0.2, 0.7);
+         ghostMat.alpha = 0.6;
+         ghostSphere.material = ghostMat;
+         // Let's try our built-in 'ground' shape. Params: name, width, depth, subdivisions, scene
+         this.ground = BABYLON.Mesh.CreateGround("ground1", 6, 6, 2, scene);
+         this.ground.rotation = new CANNON.Vec3(-0,0,0);
+	
+         
+     
+        BABYLON.SceneLoader.ImportMesh("", "https://raw.githubusercontent.com/RaggarDK/Baby/baby/", "height.babylon", scene, function (newMeshes) {
+		      setTimeout(function () {
+			ground = newMeshes[1];
+			var material = new BABYLON.StandardMaterial("texture1", scene);
+			//window.ground = ground;
+			//ground.parent = undefined;
+			ground.scaling.copyFromFloats(.3, .3, .3);	
+			ground.bakeCurrentTransformIntoVertices();
+			material.diffuseTexture = new BABYLON.Texture("https://raw.githubusercontent.com/RaggarDK/Baby/baby/plan.png", scene);
+			ground.material = material;
+			//ground.physicsImpostor = new BABYLON.PhysicsImpostor(ground, BABYLON.PhysicsEngine.HeightmapImpostor, { mass: 0 }, scene);
+			createHeightmap(newMeshes[1]);
+		}, 2000)
+		
+	}); 
+        
+         
+         // window.addEventListener("keydown", handleKeyDown, false);
+         // window.addEventListener("keyup", handleKeyUp, false);
+          
+          
+          
+        
+          
+          window.addEventListener("mousemove", function(e) {
+	   //	console.log("mouse");
+             event = e; 
+              
+             var movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
+             var movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
+
+			//this.sphereBody.quaternion.y += movementX * 0.002;
+           //  this.sphereBody.quaternion.x += movementY * 0.002;
+
+             sphereBody.rotation.y += movementX * 0.008;
+             sphereBody.rotation.x += movementY * 0.008;
+			 
+			 
+
+	}); 
+   
+
+          
+          
+          
+          
+         seq = 0; 
+          
+          function handleKeyDown(evt){   
+              seq += 1;
+              
+              
+               if (evt.keyCode==16){
+               if(inputs){
+                  console.log(inputs); 
+                   
+               }
+                   
+             }
+       
+              
+              if (evt.keyCode==65){
+                  inputs[seq] = {left:1, rot:sphereBody.rotation};
+                  this.playerDirection[0] = 1;
+                  applyInput(seq, "left", sphereBody.rotation);
+                  console.log(seq);
+                 // iosocket.emit('input', { left:1, rot:sphereBody.rotation});
+             
+        
+                 // shootBullet(sphereBody.rotation.y, sphereBody.position);
+                  
+                  
+             }
+              
+          
+              
+             if (evt.keyCode==68){  
+                 sphereBody.position.x += .1;
+                 inputs[seq] = {right:1, rot:sphereBody.rotation};
+                 this.playerDirection[1] = 1;
+                 //applyInput(seq, "right", sphereBody.rotation);
+           //iosocket.emit('input', { right:1, rot:sphereBody.rotation});
+             }
+              
+              if (evt.keyCode==87){ 
+                  inputs[seq] = {forward:1, rot:sphereBody.rotation};
+                  applyInput(seq, "forward", sphereBody.rotation);
+                 this.playerDirection[2] = 1;
+                //  iosocket.emit('input', { forward:1, rot:sphereBody.rotation});
+            
+              }
+                          
+              if (evt.keyCode==83){  
+                  inputs[seq] = {back:1, rot:sphereBody.rotation};
+                  this.playerDirection[3] = 1;
+                  applyInput(seq, "back", sphereBody.rotation);
+       // iosocket.emit('input', { back:1, rot:sphereBody.rotation});
+                                  }
+          }
+                              
+        function handleKeyUp(evt){    
+            if (evt.keyCode==65){  
+            this.playerDirection[0] = 0;
+               // iosocket.emit('input', { left:0});
+            }
+                                 
+            if (evt.keyCode==68){ 
+              //  iosocket.emit('input', { right:0});
+            this.playerDirection[1] = 0;
+               
+            }
+            if (evt.keyCode==87){ 
+               //  iosocket.emit('input', { forward:0});
+            this.playerDirection[2] = 0;
+           
+            }
+            if (evt.keyCode==83){  
+              //   iosocket.emit('input', { back:0});
+            this.playerDirection[3] = 0;
+            }
+                              }
+               
+     
+     
+     
+     
+     
+     
+     
+     var keyHandler = function(e) {
+  e = e || window.event;
+  if (e.keyCode == 65) {
+      console.log("Lefty");
+   client.left = (e.type == "keydown");
+  } 
+  
+  if (e.keyCode == 68) {
+       console.log("righty");
+   client.right = (e.type == "keydown");
+  }
+  if (e.keyCode == 87) {
+      console.log("forward");
+    client.forward = (e.type == "keydown");
+  } else if (e.keyCode == 83) {
+    client.back = (e.type == "keydown");
+      console.log("back");
+  }
+};
+     
+     
+window.addEventListener("keydown", keyHandler, false);
+window.addEventListener("keyup", keyHandler, false);
+     
+     
+     
+     
+     
+     
+     
+     
+         return scene;
+      };
+       
+     
+       
+   
+var createPhysics = function(){
+  
+console.log("createPhysicsFunction Called!");   
+     
+   
+world = new CANNON.World();
+  
+world.gravity.set(0,-30,0);
+world.broadphase = new CANNON.NaiveBroadphase();
+        
+var mass = 5, radius = 1;
+sphereShape = new CANNON.Sphere(radius); // Step 1
+sphereBody = new CANNON.Body({mass: 1, shape: sphereShape}); // Step 2
+sphereBody.position.set(0,2,2);
+sphereBody.rotation = new CANNON.Vec3();    
+world.add(sphereBody); // Step 3
+console.log("sphereBodyPosition0: " + sphereBody.position);  
+
+sphereBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1,0,0),-Math.PI/2);     
+     
+groundShape = new CANNON.Plane();
+groundBody = new CANNON.Body({ mass: 0, shape: groundShape });
+console.log(groundBody.rotation);
+
+groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1,0,0),-Math.PI/2);
+
+console.log(groundBody.quaternion);     
+world.add(groundBody);
+        
+        
+timeStep = 1.0 / 60.0; // seconds
+velocity = sphereBody.velocity;      
+        
+sphereBody.velocity = new CANNON.Vec3(0,0,0);    
+
+return world; 
+     
+ }      
+       
+       
+
+      
+      
+      
+      var scene = createScene();
+      this.world = createPhysics(); 
+      var zeroVel = new CANNON.Vec3(0,0,0);
+      var inputVelocity = new CANNON.Vec3();
+      var lastTime = (new Date()).getTime();
+      var currentTime = 0;
+      var delta = 0;
+       
+      engine.runRenderLoop(function () {
+         
+    
+          currentTime = (new Date()).getTime();
+          delta = (currentTime - lastTime) / 1000;
+      
+          //   console.log(delta);
+          processInputs();
+          scene.render();
+          world.step(1.0 / 60.0);
+          
+          velocity = sphereBody.velocity; 
+          this.sphere.position = sphereBody.position;
+    
+		  this.sphere.rotation = sphereBody.rotation;
+	
+          moveSpeed = .1;
+	
+        //  camera.position.x = sphereBody.position.x
+        //  camera.position.z = sphereBody.position.z
+          
+         // camera.rotation = sphereBody.rotation;
+          
+		  //sphereBody.position.z += moveSpeed;
+          
+          //console.log(sphereBody.position.x);
+          
+          
+       
+    
+            
+          
+       velocity.x = inputVelocity.x;
+       velocity.z = inputVelocity.z;  
+     
+          lastTime = currentTime;
+          
+      });
+       
+    
+    
+       
+    
+       
+   
+      window.addEventListener("resize", function () {
+         engine.resize();
+      });
+	  
+	
+    
+       
+       
+       
+function processInputs() {
+  // Compute delta time since last update.
+  var now_ts = +new Date();
+  var last_ts = this.last_ts || now_ts;
+  var dt_sec = (now_ts - last_ts) / 1000.0;
+  this.last_ts = now_ts;
+
+  // Package player's input.
+  var input;
+  if (client.right) {
+    input = {dir:"right", press_time: dt_sec };
+  }else if (client.forward && client.left) {
+    input = {dir:"sfLeft", press_time: dt_sec };
+  } else if (client.left) {
+    input = {dir:"left", press_time: dt_sec };
+  }else if (client.forward) {
+    input = {dir:"forward", press_time: dt_sec };
+  }else if (client.back) {
+    input = {dir:"back", press_time: dt_sec };
+  
+  } else {
+    // Nothing interesting happened.
+    return;
+  }
+
+  // Send the input to the server.
+  input.input_sequence_number = input_sequence_number++;
+    console.log(input.input_sequence_number);
+ // input.entity_id = this.entity_id;
+    
+    applyInputs(input);  
+ 
+    inputsToSend.push(input);
+    iosocket.emit('input', input);
+                      
+               
+
+
+  // Save this input for later reconciliation.
+  pending_inputs.push(input);
+} 
+       
+function applyInputs(input) {
+ //   console.log(input.dir);
+    if (input.dir == "left"){
+  sphereBody.position.x += -input.press_time*5;
+}
+    
+   if (input.dir == "right"){
+  sphereBody.position.x += input.press_time*5;
+}
+    
+if (input.dir == "forward"){
+  sphereBody.position.z += input.press_time*5;
+}
+    
+if (input.dir == "back"){
+  sphereBody.position.z += -input.press_time*5;
+}
+    
+ if (input.dir == "sfLeft"){
+  sphereBody.position.z += input.press_time*2.5;
+     sphereBody.position.x += -input.press_time*2.5;
+}
+    
+    
+    
+    }       
+
+       
+      
+       
+
+function createHeightmap (object, pointDepth) {
+            var pos = object.getVerticesData(BABYLON.VertexBuffer.PositionKind);
+            var matrix = [];
+            //For now pointDepth will not be used and will be automatically calculated.
+            //Future reference - try and find the best place to add a reference to the pointDepth variable.
+            var arraySize = pointDepth || ~~(Math.sqrt(pos.length / 3) - 1);
+            var dim = Math.min(object.getBoundingInfo().boundingBox.extendSize.x, object.getBoundingInfo().boundingBox.extendSize.z);
+            var elementSize = dim * 2 / arraySize;
+            var minY = object.getBoundingInfo().boundingBox.extendSize.y;
+            for (var i = 0; i < pos.length; i = i + 3) {
+                var x = Math.round((pos[i + 0]) / elementSize + arraySize / 2);
+                var z = Math.round(((pos[i + 2]) / elementSize - arraySize / 2) * -1);
+                var y = pos[i + 1] + minY;
+                if (!matrix[x]) {
+                    matrix[x] = [];
+                }
+                if (!matrix[x][z]) {
+                    matrix[x][z] = y;
+                }
+                matrix[x][z] = Math.max(y, matrix[x][z]);
+            }
+            for (var x = 0; x <= arraySize; ++x) {
+                if (!matrix[x]) {
+                    var loc = 1;
+                    while (!matrix[(x + loc) % arraySize]) {
+                        loc++;
+                    }
+                    matrix[x] = matrix[(x + loc) % arraySize].slice();
+                }
+                for (var z = 0; z <= arraySize; ++z) {
+                    if (!matrix[x][z]) {
+                        var loc = 1;
+                        var newValue;
+                        while (newValue === undefined) {
+                            newValue = matrix[x][(z + loc++) % arraySize];
+                        }
+                        matrix[x][z] = newValue;
+                    }
+                }
+            }
+            var shape = new CANNON.Heightfield(matrix, {
+                elementSize: elementSize
+            });
+    
+            console.log(elementSize);
+    
+            //Output Matrix Info for Node.js
+            console.log(matrix.length);
+			for (i=0;i<matrix.length;i++){
+				
+				//GET MATRIX DATA
+			//console.info(JSON.stringify(matrix[0], null, '  '))
+			console.log("\n" + "matrix2[" + i + "] = " + JSON.stringify(matrix[i], null, ' '))	
+			}
+          
+			heightBody = new CANNON.Body({mass: 0, shape: shape}); // Step 2
+			heightBody.position.y = -4.5;
+			heightBody.position.x = -30;
+			heightBody.position.z = 30;
+			heightBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1,0,0),-Math.PI/2);  
+			console.log(heightBody.position);
+			world.add(heightBody);
+		
+	
+            
+};      
+        
+    
+
+
+       
+       
+   </script>
+</body>
+</html>
